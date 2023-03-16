@@ -53,6 +53,11 @@ set (@PROJECT_VARIANT_NAME@_LIBRARIES @PROJECT_VARIANT_NAME@::proj)
 include ("${_DIR}/@PROJECT_NAME_LOWER@-targets.cmake")
 include ("${_DIR}/@PROJECT_LEGACY_LOWER@-targets.cmake")
 
+get_target_property(library_type PROJ::proj TYPE)
+if(library_type STREQUAL "STATIC_LIBRARY")
+    find_dependency(SQLite3 CONFIG)
+endif()
+
 unset (_ROOT)
 unset (_DIR)
 
