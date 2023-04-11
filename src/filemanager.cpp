@@ -1273,7 +1273,7 @@ static std::string pj_get_relative_share_proj_internal_no_check() {
     if (GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
                               GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
                           (LPCSTR)&pj_get_relative_share_proj, &hm) == 0) {
-        std::cout << "no ex"
+        std::cout << "no ex "
                   << GetModuleHandleEx(
                          GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
                              GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
@@ -1286,14 +1286,24 @@ static std::string pj_get_relative_share_proj_internal_no_check() {
     DWORD path_size = 1024;
 
     std::wstring wout;
+    wout.clear();
+    wout.resize(path_size);
+    DWORD result = GetModuleFileNameW(NULL, &wout[0], path_size - 1);
+    DWORD last_error = GetLastError();
+    std::cout << "result " << result << std::endl;
+    wout.resize(wcslen(wout.c_str()));
+    std::cout << "wout " << NS_PROJ::WStringToUTF8(wout) << std::endl;
+    std::cout << "last_error " << last_error << std::endl;
+
     for (;;) {
         wout.clear();
         wout.resize(path_size);
         DWORD result = GetModuleFileNameW(hm, &wout[0], path_size - 1);
         DWORD last_error = GetLastError();
-        std::cout << "result" << result << std::endl;
-        std::cout << "wout" << wout.c_str() << std::endl;
-        std::cout << "last_error" << last_error << std::endl;
+        std::cout << "result " << result << std::endl;
+        wout.resize(wcslen(wout.c_str()));
+        std::cout << "wout " << NS_PROJ::WStringToUTF8(wout) << std::endl;
+        std::cout << "last_error " << last_error << std::endl;
 
         if (result == 0) {
             return std::string();
