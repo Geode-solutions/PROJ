@@ -41,6 +41,7 @@
 #include <stdlib.h>
 
 #include <algorithm>
+#include <iostream>
 #include <limits>
 #include <string>
 
@@ -1372,7 +1373,7 @@ static bool get_path_from_relative_share_proj(PJ_CONTEXT *ctx, const char *name,
     }
     out += '/';
     out += name;
-
+    std::cout << "test " << out << std::endl;
     return NS_PROJ::FileManager::exists(ctx, out.c_str());
 }
 
@@ -1507,6 +1508,8 @@ static void *pj_open_lib_internal(
 
         else if (get_path_from_relative_share_proj(ctx, name, fname)) {
             /* check if it lives in a ../share/proj dir of the proj dll */
+            std::cout << "nothing " << std::endl;
+
         } else if (proj_data_name != nullptr &&
                    (fid = open_file(
                         ctx,
