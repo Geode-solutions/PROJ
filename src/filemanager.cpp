@@ -1292,7 +1292,7 @@ static std::string pj_get_relative_share_proj_internal_no_check() {
         DWORD result = GetModuleFileNameW(hm, &wout[0], path_size - 1);
         DWORD last_error = GetLastError();
         std::cout << "result" << result << std::endl;
-        std::cout << "wout" << wout << std::endl;
+        std::cout << "wout" << wout.c_str() << std::endl;
         std::cout << "last_error" << last_error << std::endl;
 
         if (result == 0) {
