@@ -41,7 +41,6 @@
 #include <stdlib.h>
 
 #include <algorithm>
-#include <iostream>
 #include <limits>
 #include <string>
 
@@ -1268,42 +1267,22 @@ static std::string pj_get_relative_share_proj_internal_no_check() {
 #if defined(_WIN32) || defined(HAVE_LIBDL)
 #ifdef _WIN32
     HMODULE hm = NULL;
-    std::cout << "share" << std::endl;
-    // #if !UWP
+#if !UWP
     if (GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
                               GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
                           (LPCSTR)&pj_get_relative_share_proj, &hm) == 0) {
-        std::cout << "no ex "
-                  << GetModuleHandleEx(
-                         GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
-                             GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
-                         (LPCSTR)&pj_get_relative_share_proj, &hm)
-                  << std::endl;
         return std::string();
     }
-    // #endif // UWP
+#endif // UWP
 
     DWORD path_size = 1024;
 
     std::wstring wout;
-    wout.clear();
-    wout.resize(path_size);
-    DWORD result = GetModuleFileNameW(NULL, &wout[0], path_size - 1);
-    DWORD last_error = GetLastError();
-    std::cout << "result " << result << std::endl;
-    wout.resize(wcslen(wout.c_str()));
-    std::cout << "wout " << NS_PROJ::WStringToUTF8(wout) << std::endl;
-    std::cout << "last_error " << last_error << std::endl;
-
     for (;;) {
         wout.clear();
         wout.resize(path_size);
         DWORD result = GetModuleFileNameW(hm, &wout[0], path_size - 1);
         DWORD last_error = GetLastError();
-        std::cout << "result " << result << std::endl;
-        wout.resize(wcslen(wout.c_str()));
-        std::cout << "wout " << NS_PROJ::WStringToUTF8(wout) << std::endl;
-        std::cout << "last_error " << last_error << std::endl;
 
         if (result == 0) {
             return std::string();
@@ -1393,7 +1372,7 @@ static bool get_path_from_relative_share_proj(PJ_CONTEXT *ctx, const char *name,
     }
     out += '/';
     out += name;
-    std::cout << "test " << out << std::endl;
+
     return NS_PROJ::FileManager::exists(ctx, out.c_str());
 }
 
@@ -1449,7 +1428,6 @@ static void *pj_open_lib_internal(
             void *lib_fid = nullptr;
             auto paths = NS_PROJ::internal::split(projLibPaths, dirSeparator);
             for (const auto &path : paths) {
-                std::cout << " S path " << path << std::endl;
                 fname = NS_PROJ::internal::stripQuotes(path);
                 fname += DIR_CHAR;
                 fname += name;
@@ -1472,7 +1450,6 @@ static void *pj_open_lib_internal(
         /* or fixed path: /name, ./name or ../name  */
         else if (is_rel_or_absolute_filename(name)) {
             fname = name;
-            std::cout << " rel " << name << std::endl;
 #ifdef _WIN32
             try {
                 NS_PROJ::UTF8ToWString(name);
@@ -1490,19 +1467,16 @@ static void *pj_open_lib_internal(
                  (tmpname = ctx->file_finder(
                       ctx, name, ctx->file_finder_user_data)) != nullptr) {
             fname = tmpname;
-            std::cout << " tmpname " << tmpname << std::endl;
         }
 
         /* The user has search paths set */
         else if (!ctx->search_paths.empty()) {
             for (const auto &path : ctx->search_paths) {
-                std::cout << " search path " << path << std::endl;
                 try {
                     fname = path;
                     fname += DIR_CHAR;
                     fname += name;
                     fid = open_file(ctx, fname.c_str(), mode);
-                    std::cout << " search ok " << fname << std::endl;
                 } catch (const std::exception &) {
                 }
                 if (fid)
@@ -1521,8 +1495,6 @@ static void *pj_open_lib_internal(
             fname = proj_context_get_user_writable_directory(ctx, false);
             fname += DIR_CHAR;
             fname += name;
-            std::cout << " dontReadUserWritableDirectory " << fname
-                      << std::endl;
         }
 
         /* if the environment PROJ_DATA defined, and *not* tried as last
@@ -1530,13 +1502,11 @@ static void *pj_open_lib_internal(
         else if (!gbPROJ_DATA_ENV_VAR_TRIED_LAST &&
                  !(projLib = NS_PROJ::FileManager::getProjDataEnvVar(ctx))
                       .empty()) {
-            std::cout << " PROJ_DATA " << std::endl;
             fid = open_lib_from_paths(projLib);
         }
 
         else if (get_path_from_relative_share_proj(ctx, name, fname)) {
             /* check if it lives in a ../share/proj dir of the proj dll */
-            std::cout << " nothing " << std::endl;
         } else if (proj_data_name != nullptr &&
                    (fid = open_file(
                         ctx,
@@ -1547,7 +1517,6 @@ static void *pj_open_lib_internal(
             fname = proj_data_name;
             fname += DIR_CHAR;
             fname += name;
-            std::cout << " hardcoded " << fname << std::endl;
         }
 
         /* if the environment PROJ_DATA defined, and tried as last possibility
@@ -1556,15 +1525,12 @@ static void *pj_open_lib_internal(
                  !(projLib = NS_PROJ::FileManager::getProjDataEnvVar(ctx))
                       .empty()) {
             fid = open_lib_from_paths(projLib);
-            std::cout << " last " << std::endl;
         }
 
         else {
             /* just try it bare bones */
             fname = name;
-            std::cout << " default " << std::endl;
         }
-        std::cout << " coucou " << std::endl;
 
         if (fid != nullptr ||
             (fid = open_file(ctx, fname.c_str(), mode)) != nullptr) {
@@ -1679,15 +1645,12 @@ NS_PROJ::FileManager::open_resource_file(PJ_CONTEXT *ctx, const char *name,
             pj_open_lib_internal(ctx, name, "rb", pj_open_file_with_manager,
                                  out_full_filename, out_full_filename_size)));
 
-    std::cout << "out_full_filename 1 " << out_full_filename << std::endl;
-
     // Retry with the new proj grid name if the file name doesn't end with .tif
     std::string tmpString; // keep it in this upper scope !
     if (file == nullptr && !is_tilde_slash(name) &&
         !is_rel_or_absolute_filename(name) && !starts_with(name, "http://") &&
         !starts_with(name, "https://") && strcmp(name, "proj.db") != 0 &&
         strstr(name, ".tif") == nullptr) {
-        std::cout << "case 1 " << std::endl;
 
         auto dbContext = getDBcontext(ctx);
         if (dbContext) {
@@ -1719,7 +1682,6 @@ NS_PROJ::FileManager::open_resource_file(PJ_CONTEXT *ctx, const char *name,
              !is_rel_or_absolute_filename(name) &&
              !starts_with(name, "http://") && !starts_with(name, "https://") &&
              strstr(name, ".tif") != nullptr) {
-        std::cout << "case 2 " << std::endl;
 
         auto dbContext = getDBcontext(ctx);
         if (dbContext) {
